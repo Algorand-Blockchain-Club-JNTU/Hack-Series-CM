@@ -122,7 +122,7 @@ export default function Onboarding() {
         />
 
         <View style={styles.indicatorContainer}>
-          {slides.map((_, index) => (
+          {slides?.map((_, index) => (
             <View
               key={index}
               style={[
