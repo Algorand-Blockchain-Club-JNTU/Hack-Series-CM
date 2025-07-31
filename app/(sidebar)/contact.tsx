@@ -1,11 +1,18 @@
 "use client"
 
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
 import { useNavigation } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+
+const DARK_BG = ["#000000", "#121212"]
+const FIELD_GRADIENT = ["#141414", "#1E1E1E"]
+const EMAIL_GRADIENT = ["#4a00e0", "#8e2de2"]
+const PHONE_GRADIENT = ["#00b09b", "#96c93d"]
+const LOCATION_GRADIENT = ["#ff9966", "#ff5e62"]
+const SUBMIT_GRADIENT = ["#6a11cb", "#2575fc"]
 
 export default function Contact() {
   const navigation = useNavigation()
@@ -16,16 +23,24 @@ export default function Contact() {
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
 
+  const handleSend = () => {
+    if (!name || !email || !message) {
+      Alert.alert("Missing Fields", "Please fill in all required fields.")
+      return
+    }
+
+    // Future submission logic (e.g., API call)
+    Alert.alert("Message Sent", "We'll get back to you soon!")
+    setName("")
+    setEmail("")
+    setSubject("")
+    setMessage("")
+  }
+
   return (
-    <LinearGradient colors={["#000000", "#121212"]} style={styles.container}>
+    <LinearGradient colors={DARK_BG} style={styles.container}>
       <View style={[styles.header, { marginTop: insets.top }]}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => {
-            // @ts-ignore
-            navigation.openDrawer()
-          }}
-        >
+        <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contact Us</Text>
@@ -42,55 +57,44 @@ export default function Contact() {
         </View>
 
         <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Name</Text>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#AAAAAA" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Your Name"
-                placeholderTextColor="#777777"
-                value={name}
-                onChangeText={setName}
-                selectionColor="#FFFFFF"
-              />
-            </LinearGradient>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#AAAAAA" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Your Email"
-                placeholderTextColor="#777777"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                selectionColor="#FFFFFF"
-              />
-            </LinearGradient>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Subject</Text>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.inputContainer}>
-              <Ionicons name="help-circle-outline" size={20} color="#AAAAAA" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Subject"
-                placeholderTextColor="#777777"
-                value={subject}
-                onChangeText={setSubject}
-                selectionColor="#FFFFFF"
-              />
-            </LinearGradient>
-          </View>
+          {[
+            { label: "Name", icon: "person-outline", value: name, setValue: setName, placeholder: "Your Name" },
+            {
+              label: "Email",
+              icon: "mail-outline",
+              value: email,
+              setValue: setEmail,
+              placeholder: "Your Email",
+              keyboardType: "email-address",
+            },
+            {
+              label: "Subject",
+              icon: "help-circle-outline",
+              value: subject,
+              setValue: setSubject,
+              placeholder: "Subject",
+            },
+          ].map(({ label, icon, value, setValue, placeholder, keyboardType }, idx) => (
+            <View style={styles.inputGroup} key={idx}>
+              <Text style={styles.inputLabel}>{label}</Text>
+              <LinearGradient colors={FIELD_GRADIENT} style={styles.inputContainer}>
+                <Ionicons name={icon as any} size={20} color="#AAAAAA" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={placeholder}
+                  placeholderTextColor="#777777"
+                  value={value}
+                  onChangeText={setValue}
+                  selectionColor="#FFFFFF"
+                  keyboardType={keyboardType || "default"}
+                />
+              </LinearGradient>
+            </View>
+          ))}
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Message</Text>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.textareaContainer}>
+            <LinearGradient colors={FIELD_GRADIENT} style={styles.textareaContainer}>
               <TextInput
                 style={styles.textarea}
                 placeholder="Your Message"
@@ -105,8 +109,8 @@ export default function Contact() {
             </LinearGradient>
           </View>
 
-          <TouchableOpacity style={styles.submitButtonContainer}>
-            <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.submitButton}>
+          <TouchableOpacity style={styles.submitButtonContainer} onPress={handleSend}>
+            <LinearGradient colors={SUBMIT_GRADIENT} style={styles.submitButton}>
               <Text style={styles.submitButtonText}>Send Message</Text>
               <Ionicons name="send" size={18} color="#FFFFFF" style={styles.submitButtonIcon} />
             </LinearGradient>
@@ -116,43 +120,38 @@ export default function Contact() {
         <View style={styles.contactMethodsContainer}>
           <Text style={styles.contactMethodsTitle}>Other Ways to Reach Us</Text>
 
-          <View style={styles.contactMethodCard}>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.contactMethodCardGradient}>
-              <LinearGradient colors={["#4a00e0", "#8e2de2"]} style={styles.contactMethodIcon}>
-                <Ionicons name="mail" size={24} color="#FFFFFF" />
+          {[
+            {
+              icon: "mail",
+              label: "Email",
+              value: "support@consentmanager.com",
+              gradient: EMAIL_GRADIENT,
+            },
+            {
+              icon: "call",
+              label: "Phone",
+              value: "+1 (555) 123-4567",
+              gradient: PHONE_GRADIENT,
+            },
+            {
+              icon: "location",
+              label: "Address",
+              value: "123 Privacy Street, Security Building, Suite 456, Data City, DC 10101",
+              gradient: LOCATION_GRADIENT,
+            },
+          ].map(({ icon, label, value, gradient }, idx) => (
+            <View style={styles.contactMethodCard} key={idx}>
+              <LinearGradient colors={FIELD_GRADIENT} style={styles.contactMethodCardGradient}>
+                <LinearGradient colors={gradient} style={styles.contactMethodIcon}>
+                  <Ionicons name={icon as any} size={24} color="#FFFFFF" />
+                </LinearGradient>
+                <View style={styles.contactMethodInfo}>
+                  <Text style={styles.contactMethodLabel}>{label}</Text>
+                  <Text style={styles.contactMethodValue}>{value}</Text>
+                </View>
               </LinearGradient>
-              <View style={styles.contactMethodInfo}>
-                <Text style={styles.contactMethodLabel}>Email</Text>
-                <Text style={styles.contactMethodValue}>support@consentmanager.com</Text>
-              </View>
-            </LinearGradient>
-          </View>
-
-          <View style={styles.contactMethodCard}>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.contactMethodCardGradient}>
-              <LinearGradient colors={["#00b09b", "#96c93d"]} style={styles.contactMethodIcon}>
-                <Ionicons name="call" size={24} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={styles.contactMethodInfo}>
-                <Text style={styles.contactMethodLabel}>Phone</Text>
-                <Text style={styles.contactMethodValue}>+1 (555) 123-4567</Text>
-              </View>
-            </LinearGradient>
-          </View>
-
-          <View style={styles.contactMethodCard}>
-            <LinearGradient colors={["#141414", "#1E1E1E"]} style={styles.contactMethodCardGradient}>
-              <LinearGradient colors={["#ff9966", "#ff5e62"]} style={styles.contactMethodIcon}>
-                <Ionicons name="location" size={24} color="#FFFFFF" />
-              </LinearGradient>
-              <View style={styles.contactMethodInfo}>
-                <Text style={styles.contactMethodLabel}>Address</Text>
-                <Text style={styles.contactMethodValue}>
-                  123 Privacy Street, Security Building, Suite 456, Data City, DC 10101
-                </Text>
-              </View>
-            </LinearGradient>
-          </View>
+            </View>
+          ))}
         </View>
       </ScrollView>
     </LinearGradient>
@@ -160,9 +159,7 @@ export default function Contact() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -183,13 +180,8 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Bold",
     color: "#FFFFFF",
   },
-  rightPlaceholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 20,
-  },
+  rightPlaceholder: { width: 40 },
+  scrollView: { flex: 1, paddingTop: 20 },
   contactInfo: {
     paddingHorizontal: 20,
     marginBottom: 30,
@@ -318,4 +310,3 @@ const styles = StyleSheet.create({
     color: "#AAAAAA",
   },
 })
-
