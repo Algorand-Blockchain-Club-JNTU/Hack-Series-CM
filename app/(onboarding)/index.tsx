@@ -1,8 +1,19 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, FlatList, Alert } from "react-native"
-import { useRouter, useNavigation } from "expo-router"
+import { useState, useRef, useCallback } from "react"
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  Alert,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native"
+import { useRouter } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { StatusBar } from "expo-status-bar"
@@ -17,24 +28,28 @@ const slides = [
     title: "Welcome to Consent Manager",
     description: "Manage all your consents in one place with our secure and easy-to-use platform.",
     image: require("../../assets/images/icon.png"),
+    gradient: ["#1f005c", "#5b0060"],
   },
   {
     id: "2",
     title: "Track Your Consents",
     description: "Keep track of all your consents and permissions in an organized dashboard.",
     image: require("../../assets/images/icon.png"),
+    gradient: ["#5b0060", "#870160"],
   },
   {
     id: "3",
     title: "Secure Documents",
     description: "Store and access your important documents securely whenever you need them.",
     image: require("../../assets/images/icon.png"),
+    gradient: ["#870160", "#af0060"],
   },
   {
     id: "4",
     title: "Easy Management",
     description: "Create, review, and manage consents with just a few taps.",
     image: require("../../assets/images/icon.png"),
+    gradient: ["#af0060", "#ff005c"],
   },
 ]
 
@@ -42,14 +57,10 @@ export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const flatListRef = useRef<FlatList>(null)
   const router = useRouter()
-  const navigation = useNavigation()
 
   const handleNext = () => {
     if (currentIndex < slides.length - 1) {
-      flatListRef.current?.scrollToIndex({
-        index: currentIndex + 1,
-        animated: true,
-      })
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
     } else {
       completeOnboarding()
     }
@@ -57,32 +68,20 @@ export default function Onboarding() {
 
   const completeOnboarding = async () => {
     try {
-      // First set the AsyncStorage value
       await AsyncStorage.setItem("onboardingComplete", "true")
-
-      // Try direct navigation to the tabs
-      router.replace("/(tabs)/")
-
-      // If that doesn't work, try this alternative approach
-      setTimeout(() => {
-        // @ts-ignore - This is a workaround for navigation
-        if (navigation && navigation.navigate) {
-          // @ts-ignore
-          navigation.navigate("(tabs)")
-        }
-      }, 100)
-
-      // As a last resort, reload the app
-      setTimeout(() => {
-        router.replace("/")
-      }, 500)
+      router.replace("/(tabs)")
     } catch (error) {
-      console.error("Error completing onboarding:", error)
-      Alert.alert("Error", "There was a problem completing onboarding. Please try again.", [{ text: "OK" }])
+      console.error("❌ Error completing onboarding:", error)
+      Alert.alert("Error", "There was a problem completing onboarding. Please try again.")
     }
   }
 
-  const renderItem = ({ item }: { item: (typeof slides)[0] }) => {
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width)
+    setCurrentIndex(index)
+  }
+
+  const renderItem = useCallback(({ item }: { item: typeof slides[0] }) => {
     return (
       <View style={styles.slide}>
         <LinearGradient colors={item.gradient} style={styles.imageContainer}>
@@ -92,13 +91,7 @@ export default function Onboarding() {
         <Text style={styles.description}>{item.description}</Text>
       </View>
     )
-  }
-
-  const handleScroll = (event: any) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x
-    const index = Math.round(scrollPosition / width)
-    setCurrentIndex(index)
-  }
+  }, [])
 
   return (
     <LinearGradient colors={["#000000", "#121212"]} style={styles.container}>
@@ -117,19 +110,18 @@ export default function Onboarding() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
           keyExtractor={(item) => item.id}
+          onScroll={handleScroll}
+          getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
         />
 
         <View style={styles.indicatorContainer}>
-          {slides?.map((_, index) => (
+          {slides.map((_, index) => (
             <View
               key={index}
               style={[
                 styles.indicator,
-                {
-                  backgroundColor: index === currentIndex ? "#FFFFFF" : "#333333",
-                },
+                { backgroundColor: index === currentIndex ? "#FFFFFF" : "#333333" },
               ]}
             />
           ))}
@@ -137,12 +129,14 @@ export default function Onboarding() {
 
         <TouchableOpacity style={styles.buttonContainer} onPress={handleNext}>
           <LinearGradient
-            colors={slides[currentIndex]?.gradient || ["#6a11cb", "#2575fc"]}
+            colors={slides[currentIndex]?.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>{currentIndex === slides.length - 1 ? "Get Started" : "Next"}</Text>
+            <Text style={styles.buttonText}>
+              {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
+            </Text>
             <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
@@ -219,10 +213,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 30,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
     elevation: 5,
   },
   button: {
@@ -239,4 +229,3 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 })
-
