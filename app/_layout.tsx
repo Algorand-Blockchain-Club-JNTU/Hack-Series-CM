@@ -10,6 +10,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { DrawerContentScrollView, DrawerItemList } from "@react-navigation/drawer"
 import { LinearGradient } from "expo-linear-gradient"
 import { useEffect, useRef, useState } from "react"
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      {/* existing app code */}
+    </ErrorBoundary>
+  );
+}
 
 // Custom drawer item component with animation
 function CustomDrawerItem({ label, icon, isActive, onPress }) {
