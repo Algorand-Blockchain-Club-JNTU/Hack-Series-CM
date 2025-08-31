@@ -10,6 +10,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { DrawerContentScrollView } from "@react-navigation/drawer"
 import { LinearGradient } from "expo-linear-gradient"
 import { useEffect, useRef, useState } from "react"
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      {/* existing app code */}
+    </ErrorBoundary>
+  );
+}
 
 // 💡 Centralized Color Constants
 const Colors = {
