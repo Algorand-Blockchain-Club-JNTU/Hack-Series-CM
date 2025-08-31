@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useMemo } from "react"
 import {
   View,
   Text,
@@ -26,7 +26,8 @@ const slides = [
   {
     id: "1",
     title: "Welcome to Consent Manager",
-    description: "Manage all your consents in one place with our secure and easy-to-use platform.",
+    description:
+      "Manage all your consents in one place with our secure and easy-to-use platform.",
     image: require("../../assets/images/icon.png"),
     gradient: ["#1f005c", "#5b0060"],
   },
@@ -58,15 +59,7 @@ export default function Onboarding() {
   const flatListRef = useRef<FlatList>(null)
   const router = useRouter()
 
-  const handleNext = () => {
-    if (currentIndex < slides.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
-    } else {
-      completeOnboarding()
-    }
-  }
-
-  const completeOnboarding = async () => {
+  const completeOnboarding = useCallback(async () => {
     try {
       await AsyncStorage.setItem("onboardingComplete", "true")
       router.replace("/(tabs)")
@@ -74,12 +67,23 @@ export default function Onboarding() {
       console.error("❌ Error completing onboarding:", error)
       Alert.alert("Error", "There was a problem completing onboarding. Please try again.")
     }
-  }
+  }, [router])
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width)
-    setCurrentIndex(index)
-  }
+  const handleNext = useCallback(() => {
+    if (currentIndex < slides.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
+    } else {
+      completeOnboarding()
+    }
+  }, [currentIndex, completeOnboarding])
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(event.nativeEvent.contentOffset.x / width)
+      setCurrentIndex(index)
+    },
+    []
+  )
 
   const renderItem = useCallback(({ item }: { item: typeof slides[0] }) => {
     return (
@@ -92,6 +96,11 @@ export default function Onboarding() {
       </View>
     )
   }, [])
+
+  const currentGradient = useMemo(
+    () => slides[currentIndex]?.gradient || ["#000", "#111"],
+    [currentIndex]
+  )
 
   return (
     <LinearGradient colors={["#000000", "#121212"]} style={styles.container}>
@@ -112,6 +121,7 @@ export default function Onboarding() {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           onScroll={handleScroll}
+          scrollEventThrottle={16}
           getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
         />
 
@@ -127,9 +137,9 @@ export default function Onboarding() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.buttonContainer} onPress={handleNext}>
+        <TouchableOpacity style={styles.buttonContainer} onPress={handleNext} activeOpacity={0.8}>
           <LinearGradient
-            colors={slides[currentIndex]?.gradient}
+            colors={currentGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.button}
@@ -146,29 +156,12 @@ export default function Onboarding() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  skipContainer: {
-    alignItems: "flex-end",
-    padding: 16,
-  },
-  skipButton: {
-    padding: 8,
-  },
-  skipText: {
-    fontSize: 16,
-    fontFamily: "Poppins-Medium",
-    color: "#FFFFFF",
-  },
-  slide: {
-    width,
-    alignItems: "center",
-    padding: 20,
-  },
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
+  skipContainer: { alignItems: "flex-end", padding: 16 },
+  skipButton: { padding: 8 },
+  skipText: { fontSize: 16, fontFamily: "Poppins-Medium", color: "#FFFFFF" },
+  slide: { width, alignItems: "center", padding: 20 },
   imageContainer: {
     width: width * 0.8,
     height: height * 0.4,
@@ -178,54 +171,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     padding: 20,
   },
-  image: {
-    width: "80%",
-    height: "80%",
-    resizeMode: "contain",
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: "Poppins-Bold",
-    textAlign: "center",
-    marginBottom: 16,
-    color: "#FFFFFF",
-  },
-  description: {
-    fontSize: 16,
-    fontFamily: "Poppins-Regular",
-    textAlign: "center",
-    paddingHorizontal: 20,
-    color: "#AAAAAA",
-  },
-  indicatorContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  indicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  buttonContainer: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 30,
-    overflow: "hidden",
-    elevation: 5,
-  },
-  button: {
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonText: {
-    fontSize: 18,
-    fontFamily: "Poppins-Bold",
-    marginRight: 8,
-    color: "#FFFFFF",
-  },
+  image: { width: "80%", height: "80%", resizeMode: "contain" },
+  title: { fontSize: 28, fontFamily: "Poppins-Bold", textAlign: "center", marginBottom: 16, color: "#FFFFFF" },
+  description: { fontSize: 16, fontFamily: "Poppins-Regular", textAlign: "center", paddingHorizontal: 20, color: "#AAAAAA" },
+  indicatorContainer: { flexDirection: "row", justifyContent: "center", marginVertical: 20 },
+  indicator: { width: 10, height: 10, borderRadius: 5, marginHorizontal: 5 },
+  buttonContainer: { marginHorizontal: 20, marginBottom: 20, borderRadius: 30, overflow: "hidden", elevation: 5 },
+  button: { paddingVertical: 15, paddingHorizontal: 30, flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  buttonText: { fontSize: 18, fontFamily: "Poppins-Bold", marginRight: 8, color: "#FFFFFF" },
 })
