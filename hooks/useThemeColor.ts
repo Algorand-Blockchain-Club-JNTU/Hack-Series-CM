@@ -1,21 +1,27 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
+import { useMemo } from "react"
+import { Colors } from "@/constants/Colors"
+import { useColorScheme } from "@/hooks/useColorScheme"
 
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+type ThemeName = keyof typeof Colors
+type ThemeColorName<T extends ThemeName> = keyof typeof Colors[T]
 
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+interface ThemeProps<T extends ThemeName> {
+  light?: string
+  dark?: string
+  // in future, you can add system?, highContrast?, etc.
+}
+
+export function useThemeColor<T extends ThemeName>(
+  props: ThemeProps<T>,
+  colorName: ThemeColorName<T>
 ) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
+  const theme = (useColorScheme() as ThemeName) ?? "light"
 
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
+  return useMemo(() => {
+    // If caller provided an override, use it
+    if (props?.[theme]) return props[theme] as string
+
+    // Otherwise fallback to Colors definition
+    return Colors[theme]?.[colorName] ?? "#000" // safe fallback
+  }, [theme, props, colorName])
 }
